@@ -13,6 +13,7 @@ export interface ChatReply {
   answer: string;
   session_id: string;
   emergency: boolean;
+  suggestions?: string[];
 }
 
 export const FALLBACK_CONFIG: ChatConfig = {

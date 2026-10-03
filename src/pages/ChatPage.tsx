@@ -25,6 +25,7 @@ export default function ChatPage() {
   const nextId = useRef(1);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const lastBot = [...messages].reverse().find((m) => m.role === "bot");
   const add = (m: Omit<Message, "id">) => setMessages((prev) => [...prev, { ...m, id: nextId.current++ }]);
 
   useEffect(() => {
@@ -42,15 +43,18 @@ export default function ChatPage() {
     try {
       const reply = await sendMessage(text, sessionRef.current);
       sessionRef.current = reply.session_id;
-      add({ role: "bot", text: reply.answer, emergency: reply.emergency });
+      add({ role: "bot", text: reply.answer, emergency: reply.emergency, suggestions: reply.suggestions ?? [] });
     } catch (e) {
-      const tooMany = e instanceof ChatError && e.status === 429;
+      const status = e instanceof ChatError ? e.status : 0;
       add({
         role: "bot",
         error: true,
-        text: tooMany
-          ? "You are sending messages too quickly. Please wait a minute and try again."
-          : `Sorry, something went wrong. Please try again or call ${config.reception_number}.`,
+        text:
+          status === 429
+            ? "Let's slow down just a little. Please wait a minute and ask me again."
+            : status === 503
+              ? "Many people are chatting with me right now. Could you please try again in a minute?"
+              : `I'm sorry, I'm having a little trouble right now. Please try again in a moment, or call our reception at ${config.reception_number}.`,
       });
     } finally {
       setLoading(false);
@@ -58,17 +62,21 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="mx-auto flex h-full max-w-md flex-col bg-chat-bg shadow-xl">
+    <div className="mx-auto flex h-full max-w-md flex-col bg-chat-bg shadow-[0_8px_40px_rgba(38,55,58,0.12)] sm:my-0">
       <Header emergencyNumber={config.emergency_number} />
-      <main className="flex-1 space-y-2 overflow-y-auto px-3 py-3" aria-live="polite">
+      <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
         <MessageBubble message={{ id: 0, role: "bot", text: config.greeting }} />
         {messages.map((m) => <MessageBubble key={m.id} message={m} />)}
         {!started && (
           <QuickReplies
             options={config.quick_replies}
             disabled={loading}
+            label="You can tap one of these to begin"
             onPick={(label) => send(QUICK_QUESTIONS[label] ?? label)}
           />
+        )}
+        {!loading && lastBot?.suggestions && lastBot.suggestions.length > 0 && messages[messages.length - 1] === lastBot && (
+          <QuickReplies options={lastBot.suggestions} disabled={loading} label="You may also want to ask" onPick={(label) => send(label)} />
         )}
         {loading && <TypingIndicator />}
         <div ref={bottomRef} />

@@ -19,16 +19,16 @@ export default function InputBar({ onSend, disabled, disclaimer }: Props) {
   };
 
   return (
-    <div className="bg-white px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-2">
+    <div className="border-t border-black/5 bg-white px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-2">
       <div className="flex items-center gap-2">
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
           maxLength={MAX_CHARS}
-          placeholder="Type your question"
+          placeholder="Ask me anything about the hospital..."
           aria-label="Type your question"
-          className="min-w-0 flex-1 rounded-full bg-chat-bg px-4 py-2.5 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="min-w-0 flex-1 rounded-full bg-chat-bg px-4 py-2.5 text-[15px] outline-none placeholder:text-ink/40 focus-visible:ring-2 focus-visible:ring-brand/50"
         />
         <button
           type="button"
